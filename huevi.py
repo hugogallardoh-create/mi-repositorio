@@ -216,15 +216,15 @@ try:
     with res_col2:
         st.subheader("Análisis de Equilibrio", help="Se está tomando el precio del bien 2 como numerario.")
 
-        st.metric("Precio relativo del bien 1", f"{p1_sol:.2f}")
+        st.metric("Precio relativo del bien 1 (p1/p2)", f"{p1_sol:.2f}")
     
         
         tab_h, tab_f, tab_c = st.tabs(["🏠 Nacional", "🌍 Extranjero", "📈 Ganancias del Comercio"])
         
         with tab_h:
             u_col1, u_col2 = st.columns(2)
-            u_col1.metric("Salario", f"{w:.2f}", delta=round(cambio_w, 2))
-            u_col2.metric("Renta", f"{r:.2f}", delta=round(cambio_r, 2))
+            u_col1.metric("Salario (w/p2)", f"{w:.2f}", delta=round(cambio_w, 2))
+            u_col2.metric("Renta (r/p2)", f"{r:.2f}", delta=round(cambio_r, 2))
 
             # Tabla simple de Producción vs Consumo
             st.dataframe(pd.DataFrame({
