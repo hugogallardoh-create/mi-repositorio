@@ -88,7 +88,7 @@ try:
             l1_range = np.linspace(0.1, L_val-0.1, 100)
             k1_range = (c2 * K_val * l1_range) / (c1 * L_val + (c2 - c1) * l1_range)
             q1 = (l1_range**a1) * (k1_range**(1-a1))
-            q2 = ((L_val-l1_range)**a2) * ((K_val-k1_range)**1-a2)
+            q2 = ((L_val-l1_range)**a2) * ((K_val-k1_range)**(1-a2))
             return q1, q2
 
         fig, ax = plt.subplots(figsize=(10, 7))
