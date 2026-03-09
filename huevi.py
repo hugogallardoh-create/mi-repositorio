@@ -3,11 +3,15 @@ import numpy as np
 from scipy.optimize import fsolve
 import matplotlib.pyplot as plt
 import pandas as pd
+import plotly.graph_objects as go
 
-# 1. Configuración inicial
+#####################################################
+#### BARRAS DE PARÁMETROS Y RESOLUCIÓN DEL MODELO ###
+#####################################################
+
 st.set_page_config(page_title="Simulador Heckscher-Ohlin", layout="wide")
 
-# 2. Funciones Matemáticas (Caja de herramientas)
+# Funciones Matemáticas 
 def requerimiento_factor(w1, w2, alfa, A):
     w1 = max(w1, 1e-12)
     w2 = max(w2, 1e-12)
@@ -28,8 +32,15 @@ def mercado_factores(vars, w, r, L_val, K_val, a1, a2):
     R2 = K_val - requerimiento_factor(r, w, 1-a1, 1.0)*Y1 - requerimiento_factor(r, w, 1-a2, 1.0)*Y2
     return [R1, R2]
 
-# 3. SECCIÓN DE ENTRADAS (En el cuerpo principal)
-# Creamos tres columnas para que los controles no ocupen demasiado espacio vertical
+def get_ppf(L_val, K_val, a1, a2):
+    c1, c2 = a1/(1-a1), a2/(1-a2)
+    l1_range = np.linspace(0.1, L_val-0.1, 100)
+    k1_range = (c2 * K_val * l1_range) / (c1 * L_val + (c2 - c1) * l1_range)
+    q1 = (l1_range**a1) * (k1_range**(1-a1))
+    q2 = ((L_val-l1_range)**a2) * ((K_val-k1_range)**(1-a2))
+    return q1, q2
+
+# Barras de parámetros
 input_col1, input_col2, input_col3 = st.columns(3)
 
 with input_col1:
@@ -49,7 +60,8 @@ with input_col3:
         alfa2 = st.slider("Intensidad L en Bien 2 (α2)", 0.1, 0.9, 0.1)
         p2 = 1.0
 
-# 4. LÓGICA DE RESOLUCIÓN (Se ejecuta después de capturar los inputs)
+# Funciones de solución del modelo 
+
 def exceso_demanda_global(p1):
     p1 = float(np.atleast_1d(p1)[0])
     w_h, r_h = fsolve(beneficio_cero, (1.0, 1.0), args=(p1, alfa1, alfa2))
@@ -74,7 +86,6 @@ def exceso_demanda_extranjero(p1):
     I_h = w_h * L_f + r_h * K_f 
     return demanda(p1, I_h, beta) - Y1_h
 
-# 5. RENDERIZADO DE RESULTADOS
 # calculos de cada economia por separado para hacer la comparacion en las ganancias del comercio
 try:
     p1_1_sol = fsolve(exceso_demanda_local, 1.0)[0]
@@ -103,10 +114,13 @@ try:
 except Exception as e:
     st.warning("⚠️ El modelo no pudo converger para el país extranjero en autarquía. Esto suele ocurrir cuando las dotaciones son muy extremas o las intensidades de factores son idénticas.")
 
+
+# Resolución del modelo
+
 try:
     p1_sol = fsolve(exceso_demanda_global, 1.0)[0]
     
-    # Cálculos finales
+    
     w, r = fsolve(beneficio_cero, (1.0, 1.0), args=(p1_sol, alfa1, alfa2))
     w_f, r_f = fsolve(beneficio_cero, (1.0, 1.0), args=(p1_sol, alfa1, alfa2))
     Y1, Y2 = fsolve(mercado_factores, (100.0, 100.0), args=(w, r, L, K, alfa1, alfa2))
@@ -125,19 +139,34 @@ try:
     L1_sol_f = al1_f * Y1_f; L2_sol_f = al2_f * Y2_f
     K1_sol_f = ak1_f * Y1_f; K2_sol_f = ak2_f * Y2_f
 
+    exp1_h = Y1 - C1  # Si es +, Nacional exporta Bien 1
+    exp2_h = Y2 - C2  # Si es +, Nacional exporta Bien 2
+
+    cambio_w = w - w_1
+    cambio_r = r - r_1
+    cambio_w_f = w_f - w_2
+    cambio_r_f = r_f - r_2
+
+    ###########################################################################################
+    # Las graficas  y las tablas se encuentran dentro del bloque try de resolución del modelo#
+    ######################################################+###################################
+
     # Layout de resultados (2/3 gráfico, 1/3 métricas)
     res_col1, res_col2 = st.columns([2, 1])
 
+    # gráfica
+
+
+
     with res_col1:
+       
         st.subheader("Frontera de Posibilidades de Producción (FPP)")
-        
-        def get_ppf(L_val, K_val, a1, a2):
-            c1, c2 = a1/(1-a1), a2/(1-a2)
-            l1_range = np.linspace(0.1, L_val-0.1, 100)
-            k1_range = (c2 * K_val * l1_range) / (c1 * L_val + (c2 - c1) * l1_range)
-            q1 = (l1_range**a1) * (k1_range**(1-a1))
-            q2 = ((L_val-l1_range)**a2) * ((K_val-k1_range)**(1-a2))
-            return q1, q2
+
+        escenario = st.radio(
+                "Selecciona el escenario:",
+                ["Autarquía", "Comercio"],
+                horizontal=True
+            )
 
         fig, ax = plt.subplots(figsize=(10, 6))
         q1_n, q2_n = get_ppf(L, K, alfa1, alfa2)
@@ -145,40 +174,50 @@ try:
         
         ax.plot(q1_n, q2_n, label="FPP Nacional", color="#1f77b4", lw=2)
         ax.plot(q1_f, q2_f, label="FPP Extranjero", color="#ff7f0e", lw=2)
-        lim = 1.1 * np.max(np.concatenate([q1_n, q2_n, q1_f, q2_f]))
-        x = np.linspace(0, lim, 300)
-        plt.plot(x, Y2 - p1_sol*(x - Y1), lw=1, ls="--")
-        plt.plot(x, Y2_f - p1_sol*(x - Y1_f), lw=1, ls="--")
-        ax.scatter([Y1, C1], [Y2, C2], color="#1f77b4", s=50)
-        ax.annotate(f"Y nacional", (Y1, Y2), xytext=(5,5), textcoords='offset points')
-        ax.annotate(f"C nacional", (C1, C2), xytext=(5,5), textcoords='offset points')
-        ax.scatter([Y1_f, C1_f], [Y2_f, C2_f], color="#ff7f0e", s=50)
-        ax.annotate(f"Y extranjero", (Y1_f, Y2_f), xytext=(5,5), textcoords='offset points')
-        ax.annotate(f"C extranjero", (C1_f, C2_f), xytext=(5,5), textcoords='offset points')
-        ax.axis([0, lim, 0, lim])
+        if escenario == "Comercio":
+            # Líneas de precios internacionales (Presupuesto)
+            lim = 1.1 * np.max(np.concatenate([q1_n, q2_n, q1_f, q2_f]))
+            x = np.linspace(0, lim, 300)
+            ax.plot(x, Y2 - p1_sol*(x - Y1), lw=1, ls="--", color="gray", alpha=0.5)
+            ax.plot(x, Y2_f - p1_sol*(x - Y1_f), lw=1, ls="--", color="gray", alpha=0.5)
+            
+            # Puntos de producción y consumo en comercio
+            ax.scatter([Y1, C1, Y1_f, C1_f], [Y2, C2, Y2_f, C2_f], color=["#1f77b4", "#1f77b4", "#ff7f0e", "#ff7f0e"], s=50)
+            ax.annotate("Y nac", (Y1, Y2), xytext=(5,5), textcoords='offset points')
+            ax.annotate("C nac", (C1, C2), xytext=(5,5), textcoords='offset points')
+            ax.annotate("Y ext", (Y1_f, Y2_f), xytext=(5,5), textcoords='offset points')
+            ax.annotate("C ext", (C1_f, C2_f), xytext=(5,5), textcoords='offset points')
+    
+        else:
+
+            lim = 1.1 * np.max(np.concatenate([q1_n, q2_n, q1_f, q2_f]))
+            x = np.linspace(0, lim, 300)
+            ax.plot(x, Y2_1 - p1_1_sol*(x - Y1_1), lw=1, ls="--", color="gray", alpha=0.5)
+            ax.plot(x, Y2_2 - p1_2_sol*(x - Y1_2), lw=1, ls="--", color="gray", alpha=0.5)
+            
+            # Lógica para Autarquía: El consumo es igual a la producción (C = Y)
+            # Aquí deberías usar tus variables de equilibrio de autarquía si las tienes
+            ax.scatter([Y1_1, Y1_2], [Y2_1, Y2_2], color=["#1f77b4", "#ff7f0e"], s=50)
+            ax.annotate("Y nac", (Y1_1, Y2_1), xytext=(5,5), textcoords='offset points')
+            ax.annotate("Y ext", (Y1_2, Y2_2), xytext=(5,5), textcoords='offset points')
+            
+        ax.set_xlim(0, lim)
+        ax.set_ylim(0, lim)
+
         ax.set_xlabel("Bien 1")
         ax.set_ylabel("Bien 2")
         ax.legend()
         ax.grid(True, linestyle='--', alpha=0.6)
         st.pyplot(fig)
 
-        # --- Cálculos de Comercio ---
-    exp1_h = Y1 - C1  # Si es +, Nacional exporta Bien 1
-    exp2_h = Y2 - C2  # Si es +, Nacional exporta Bien 2
-
-    # Cálculo de Utilidad (Bienestar)
-    cambio_w = w - w_1
-    cambio_r = r - r_1
-    cambio_w_f = w_f - w_2
-    cambio_r_f = r_f - r_2
+    
+    # tablas de resultados
 
     with res_col2:
         st.subheader("Análisis de Equilibrio", help="Se está tomando el precio del bien 2 como numerario.")
 
         st.metric("Precio relativo del bien 1", f"{p1_sol:.2f}")
-        
-
-        # --- SECCIÓN: DETALLE POR PAÍS ---
+    
         
         tab_h, tab_f, tab_c = st.tabs(["🏠 Nacional", "🌍 Extranjero", "📈 Ganancias del Comercio"])
         
