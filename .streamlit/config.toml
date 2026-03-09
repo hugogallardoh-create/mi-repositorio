@@ -1,0 +1,6 @@
+[theme]
+primaryColor = "#F63366"          # Color de botones, sliders y destacados
+backgroundColor = "#FFFFFF"       # Fondo de la aplicación
+secondaryBackgroundColor = "#F0F2F6" # Fondo de widgets y sidebar
+textColor = "#262730"             # Color de la fuente principal
+font = "sans serif"               # Tipografía
