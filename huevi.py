@@ -6,7 +6,6 @@ import pandas as pd
 
 # 1. Configuración inicial
 st.set_page_config(page_title="Simulador Heckscher-Ohlin", layout="wide")
-st.markdown("---")
 
 # 2. Funciones Matemáticas (Caja de herramientas)
 def requerimiento_factor(w1, w2, alfa, A):
@@ -44,7 +43,7 @@ with input_col2:
         K_f = st.slider("Capital (K*)", 50.0, 500.0, 200.0)
 
 with input_col3:
-    with st.expander("Parámetros Globales", expanded=True):
+    with st.expander("Parámetros Globales", expanded=False):
         beta = st.slider("Preferencia por el bien 1", 0.1, 0.9, 0.4)
         alfa1 = st.slider("Intensidad L en Bien 1 (α1)", 0.1, 0.9, 0.9)
         alfa2 = st.slider("Intensidad L en Bien 2 (α2)", 0.1, 0.9, 0.1)
@@ -68,6 +67,13 @@ def exceso_demanda_local(p1):
     I_h = w_h * L + r_h * K
     return demanda(p1, I_h, beta) - Y1_h
 
+def exceso_demanda_extranjero(p1):
+    p1 = float(np.atleast_1d(p1)[0])
+    w_h, r_h = fsolve(beneficio_cero, (1.0, 1.0), args=(p1, alfa1, alfa2))
+    Y1_h, Y2_h = fsolve(mercado_factores, (100.0, 100.0), args=(w_h, r_h, L_f, K_f, alfa1, alfa2))
+    I_h = w_h * L_f + r_h * K_f 
+    return demanda(p1, I_h, beta) - Y1_h
+
 # 5. RENDERIZADO DE RESULTADOS
 # calculos de cada economia por separado para hacer la comparacion en las ganancias del comercio
 try:
@@ -85,7 +91,7 @@ except Exception as e:
     st.warning("⚠️ El modelo no pudo converger para el país nacional en autarquía. Esto suele ocurrir cuando las dotaciones son muy extremas o las intensidades de factores son idénticas.")
 
 try:
-    p1_2_sol = fsolve(exceso_demanda_local, 1.0)[0]
+    p1_2_sol = fsolve(exceso_demanda_extranjero, 1.0)[0]
     w_2, r_2 = fsolve(beneficio_cero, (1.0, 1.0), args=(p1_2_sol, alfa1, alfa2))
     Y1_2, Y2_2 = fsolve(mercado_factores, (100.0, 100.0), args=(w_2, r_2, L_f, K_f, alfa1, alfa2))
     I_2 = w_2 * L_f + r_2 * K_f
@@ -97,7 +103,6 @@ try:
 except Exception as e:
     st.warning("⚠️ El modelo no pudo converger para el país extranjero en autarquía. Esto suele ocurrir cuando las dotaciones son muy extremas o las intensidades de factores son idénticas.")
 
-st.markdown("---")
 try:
     p1_sol = fsolve(exceso_demanda_global, 1.0)[0]
     
@@ -124,7 +129,7 @@ try:
     res_col1, res_col2 = st.columns([2, 1])
 
     with res_col1:
-        st.subheader("Fronteras de Posibilidad de Producción (FPP)")
+        st.subheader("Frontera de Posibilidades de Producción (FPP)")
         
         def get_ppf(L_val, K_val, a1, a2):
             c1, c2 = a1/(1-a1), a2/(1-a2)
@@ -164,44 +169,24 @@ try:
     # Cálculo de Utilidad (Bienestar)
     cambio_w = w - w_1
     cambio_r = r - r_1
+    cambio_w_f = w_f - w_2
+    cambio_r_f = r_f - r_2
 
     with res_col2:
         st.subheader("Análisis de Equilibrio", help="Se está tomando el precio del bien 2 como numerario.")
-        
-        # Métrica principal con estilo
-        st.metric("Precio relativo del bien 1", f"{p1_sol:.3f}")
-        
-        # Identificar patrón de comercio
-        if exp1_h > 0:
-            pattern_text = f"🏠 El país nacional exporta el bien 1"
-            gain_detail = "Los propietarios del capital reducen sus rentas, por lo que es de esperar corrupción y lobbismo de este grupo."
-        else:
-            pattern_text = f"🏠 El país nacional exporta el bien 2"
-            gain_detail = "Los trabajadores reciben menores salarios, por lo que es de esperar oposición y huelgas de este grupo."
 
-        st.success(f"**Patrón:** {pattern_text}")
+        st.metric("Precio relativo del bien 1", f"{p1_sol:.2f}")
         
-        # Mostrar niveles de utilidad (Bienestar)
-        if exp1_h > 0:
-            u_col1, u_col2 = st.columns(2)
-            u_col1.metric("Salarios", f"{cambio_w:.1f}", delta="+ Trabajo")
-            u_col2.metric("Rentas", f"{cambio_r:.1f}", delta="- Capital")
-        else:
-            u_col1, u_col2 = st.columns(2)
-            u_col1.metric("Salarios", f"{cambio_w:.1f}", delta="- Trabajo")
-            u_col2.metric("Rentas", f"{cambio_r:.1f}", delta="+ Capital")
-            
-        st.caption(f"_{gain_detail}_")
 
         # --- SECCIÓN: DETALLE POR PAÍS ---
+        
         tab_h, tab_f, tab_c = st.tabs(["🏠 Nacional", "🌍 Extranjero", "📈 Ganancias del Comercio"])
         
         with tab_h:
-            # Uso de columnas pequeñas para datos rápidos
-            m1, m2 = st.columns(2)
-            m1.write(f"**Salario (w):**\n{w:.2f}")
-            m2.write(f"**Renta (r):**\n{r:.2f}")
-            
+            u_col1, u_col2 = st.columns(2)
+            u_col1.metric("Salario", f"{w:.2f}", delta=round(cambio_w, 2))
+            u_col2.metric("Renta", f"{r:.2f}", delta=round(cambio_r, 2))
+
             # Tabla simple de Producción vs Consumo
             st.dataframe(pd.DataFrame({
                 "Bien": ["1", "2"],
@@ -218,9 +203,9 @@ try:
             }), hide_index=True)
 
         with tab_f:
-            m1, m2 = st.columns(2)
-            m1.write(f"**Salario (w*):**\n{w_f:.2f}")
-            m2.write(f"**Renta (r*):**\n{r_f:.2f}")
+            u_col1, u_col2 = st.columns(2)
+            u_col1.metric("Salario", f"{w_f:.2f}", delta=round(cambio_w_f, 2))
+            u_col2.metric("Renta", f"{r_f:.2f}", delta=round(cambio_r_f, 2))
             
             st.dataframe(pd.DataFrame({
                 "Bien": ["1", "2"],
