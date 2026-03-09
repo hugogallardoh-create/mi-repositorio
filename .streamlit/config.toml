@@ -1,6 +1,6 @@
 [theme]
-primaryColor = "#1F77B4"           # Azul institucional (serio)
-backgroundColor = "#FFFFFF"        # Blanco puro para que el gráfico resalte
-secondaryBackgroundColor = "#F8F9FA" # Gris muy claro para los sliders
-textColor = "#212529"              # Casi negro (máxima legibilidad)
-font = "sans serif"
+primaryColor = "#941100"           # Rojo oscuro/burdeos
+backgroundColor = "#FFF1E5"        # El famoso color "salmón" del FT
+secondaryBackgroundColor = "#F2E5DA" # Un tono más oscuro del mismo papel
+textColor = "#333333"
+font = "serif"                     # Le da el toque de "periódico"
