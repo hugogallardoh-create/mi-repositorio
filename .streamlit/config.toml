@@ -1,6 +1,15 @@
 [theme]
-primaryColor = "#941100"           # Rojo oscuro/burdeos
-backgroundColor = "#FFF1E5"        # El famoso color "salmón" del FT
-secondaryBackgroundColor = "#F2E5DA" # Un tono más oscuro del mismo papel
-textColor = "#333333"
-font = "serif"                     # Le da el toque de "periódico"
+# Un verde vibrante pero profesional (tipo Excel/Deloitte)
+primaryColor = "#27AE60"          
+
+# Fondo principal blanco puro para que resalten los gráficos
+backgroundColor = "#FFFFFF"       
+
+# Un verde muy pálido para los fondos de los sliders y expanders
+secondaryBackgroundColor = "#F0FDF4" 
+
+# Un gris muy oscuro (casi negro) para que el texto sea nítido
+textColor = "#1E293B"             
+
+# Tipografía moderna y limpia
+font = "sans serif"
