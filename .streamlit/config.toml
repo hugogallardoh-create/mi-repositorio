@@ -1,6 +1,6 @@
 [theme]
-primaryColor = "#F63366"          # Color de botones, sliders y destacados
-backgroundColor = "#FFFFFF"       # Fondo de la aplicación
-secondaryBackgroundColor = "#F0F2F6" # Fondo de widgets y sidebar
-textColor = "#262730"             # Color de la fuente principal
-font = "sans serif"               # Tipografía
+primaryColor = "#1F77B4"           # Azul institucional (serio)
+backgroundColor = "#FFFFFF"        # Blanco puro para que el gráfico resalte
+secondaryBackgroundColor = "#F8F9FA" # Gris muy claro para los sliders
+textColor = "#212529"              # Casi negro (máxima legibilidad)
+font = "sans serif"
