@@ -8,7 +8,7 @@ from scipy.optimize import root_scalar
 from scipy.optimize import minimize_scalar
 import funciones as f
 
-st.set_page_config(page_title="Simulador Heckscher-Ohlin", layout="wide")
+st.set_page_config(page_title="Simulador Heckscher-Ohlin", layout="wide", initial_sidebar_state="collapsed")
 
 ####################################
 # --- SIDEBAR (BARRA LATERAL) ---
