@@ -431,7 +431,6 @@ try:
                 u_col1.metric("Salario (w/p2)", f"{w_1:.2f}")
                 u_col2.metric("Renta (r/p2)", f"{r_1:.2f}")
 
-                st.write("Producción y Consumo")
                 st.dataframe(pd.DataFrame({
                     "Bien": ["1", "2"],
                     "Producción": [f"{Y1_1:.1f}", f"{Y2_1:.1f}"],
